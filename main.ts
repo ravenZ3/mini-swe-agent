@@ -1,26 +1,26 @@
-import { GoogleGenAI } from "@google/genai";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set");
-}
-
-const ai = new GoogleGenAI({ apiKey });
-
-async function askModel(inp: string) {
-    const answer = await ai.interactions.create({
-        model: "gemini-4-hydrogen",
-        input: inp
-    });
-    return answer.steps;
-}
-
-const result = await askModel("say hello in three languages.");
+import * as readline from "node:readline/promises"
+import { stdin, stdout } from "node:process"
+import type { Message } from "./types.ts";
+import { askModel } from "./model.ts";
+import { exec } from "node:child_process"
+import { promisify } from "node:util";
 
 
-for (const step of result ?? []) {
-    if(step.type === "model_output"){
-        console.dir(step.content, {depth: null});
-    }
-    console.log(step.type)
-}
+const execAsync = promisify(exec);
+
+const context: Message[] = [{role:"system", content:"You are a coding agent that helps user solve bugs. You are a good talker too."}]
+
+
+
+//asking for user input
+const rl = readline.createInterface({ input: stdin, output: stdout });
+console.log("Hi, How's it going\n");
+
+
+const task: string = await rl.question("What should agent do? > ");
+context.push({role:"user", content: task})
+const result = await askModel(context);
+
+
+
+rl.close();
